@@ -1,3 +1,5 @@
+
+
 const taskContainer = document.querySelector(".task_container");
 console.log(taskContainer);
 
@@ -22,7 +24,7 @@ const generateNewCard = (taskData) => `
             <a href="#" class="btn btn-warning">${taskData.taskType}</a>
         </div>
         <div class="card-footer ">
-            <button type="button" class="btn btn-outline-primary float-end">Open Task</button>
+            <button type="button" id=${taskData.id} class="btn btn-outline-primary float-end">Open Task</button>
         </div>
     </div>
     </div>
@@ -31,7 +33,7 @@ const generateNewCard = (taskData) => `
 const loadInitialCardData = () => {
     // localstorage to get task card data
 
-    const getCardData = localStorage.getItem("task");
+    const getCardData = localStorage.getItem("task_manager");
     // convert from string to normal object
     const {cards} = JSON.parse(getCardData);
     // loop over those array of task objecs to create HTML Card, inject it to DOM
@@ -46,6 +48,8 @@ const loadInitialCardData = () => {
 
 };
 
+const updateLocalStorage = () =>
+  localStorage.setItem("task_manager", JSON.stringify({ cards: globalStore }));
 
 const saveChanges = () => {
     const taskData = {
@@ -64,7 +68,7 @@ const saveChanges = () => {
 
     globalStore.push(taskData);
 
-    localStorage.setItem("task", JSON.stringify({ cards: globalStore }));   //here "task" has been used for Id, so that browser can find the specific data for the application
+    localStorage.setItem("task_manager", JSON.stringify({ cards: globalStore }));   //here "task" has been used for Id, so that browser can find the specific data for the application
 
 };
 
@@ -77,7 +81,7 @@ const deleteCard = (event) => {
     // match id of element with the id inside global store
     // if match found, remove
     globalStore = globalStore.filter((cardObject) => cardObject.id !== targetID);
-    localStorage.setItem("task", JSON.stringify({ cards: globalStore }));
+    localStorage.setItem("task_manager", JSON.stringify({ cards: globalStore }));
     
     // contact parent
 
@@ -116,5 +120,60 @@ const editCard = (event) => {
     taskTitle.setAttribute("contenteditable", "true");
     taskDescription.setAttribute("contenteditable", "true");
     taskType.setAttribute("contenteditable", "true");
+    submitButton.setAttribute("onclick","saveEditChanges.apply(this, arguments)");
     submitButton.innerHTML = "Save Changes"
+};
+
+
+const saveEditChanges = (event) => {
+        console.log("Hey edit is called");
+        event = window.event;
+        // id
+        const targetID = event.target.id;
+        console.log(targetID);
+    
+        const tagname = event.target.tagName;
+    
+        let parentElement;
+        if (tagname === "BUTTON") {
+            parentElement = event.target.parentElement.parentNode;
+        } else{
+            parentElement = event.target.parentNode.parentNode.parentNode;
+        }
+        // console.log(parentElement.childNodes[7].childNodes);
+    
+        let taskTitle = parentElement.childNodes[5].childNodes[1];
+        let taskDescription = parentElement.childNodes[5].childNodes[3];
+        let taskType = parentElement.childNodes[5].childNodes[5];
+        let submitButton = parentElement.childNodes[7].childNodes[1];
+    
+        const updatedData = {
+            taskTitle: taskTitle.innerHTML,
+            taskType:   taskType.innerHTML,
+            taskDescription: taskDescription.innerHTML,
+        };
+
+        globalStore = globalStore.map((task) => { ///task to tasky or vis a vis
+            if (task.id === targetID){
+                return {
+                    id: task.id,
+                    imageUrl: task.imageUrl,
+                    taskTitle: updatedData.taskTitle,
+                    taskType: updatedData.taskType,
+                    taskDescription: updatedData.taskDescription,
+                };
+            }
+            return task;
+        });
+        console.log(globalStore);
+    
+        updateLocalStorage();
+
+        taskTitle.setAttribute("contenteditable", "false");
+        taskDescription.setAttribute("contenteditable", "false");
+        taskType.setAttribute("contenteditable", "false");
+        submitButton.removeAttribute("onclick");
+        submitButton.innerHTML = "Open Task";
+    
+       
 };
